@@ -34,7 +34,7 @@
 </head>
 <body>
     <h1>실시간 주문 관리</h1>
-    <button class="sound-test" onclick="allowSound()">소리 활성화</button>
+    <button class="sound-test" onclick="requestSoundPermission()">소리 재생 권한 요청</button>
     <div id="order-container"></div>
 
     <script type="module">
@@ -59,15 +59,22 @@
         const ordersRef = ref(database, "orders");
 
         const orderContainer = document.getElementById("order-container");
+        const SOUND_URL = "https://dreamstation1.github.io/food/bell.mp3"; // 소리 파일 URL
         let audio;
 
-        // 사용자 상호작용으로 소리 재생 허용 (전역 함수로 정의)
-        window.allowSound = function() {
-            audio = new Audio("http://bell.wuaze.com/bell.mp3");
-            audio.play().then(() => {
-                audio.pause(); // 미리 허용 후 멈춤
-                console.log("소리 재생이 활성화되었습니다.");
-            }).catch(error => console.error("소리 활성화 실패:", error));
+        // 소리 재생 권한 요청
+        window.requestSoundPermission = function() {
+            audio = new Audio(SOUND_URL);
+            audio.play()
+                .then(() => {
+                    audio.pause(); // 미리 허용 후 멈춤
+                    console.log("소리 재생 권한이 활성화되었습니다.");
+                    alert("소리 재생 권한이 허용되었습니다.");
+                })
+                .catch(error => {
+                    console.error("소리 재생 권한 요청 실패:", error);
+                    alert("소리 재생 권한 요청에 실패했습니다.");
+                });
         };
 
         // 주문 실시간 추가 감지
@@ -104,11 +111,14 @@
 
         // 소리 재생 함수
         function playSound() {
-            if (audio) {
-                audio.play().catch(error => console.error("소리 재생 실패:", error));
-            } else {
+            if (!audio) {
                 console.warn("소리가 활성화되지 않았습니다.");
+                return;
             }
+            audio.play().catch(error => {
+                console.error("소리 재생 실패:", error);
+                alert("소리 재생 중 문제가 발생했습니다.");
+            });
         }
     </script>
 </body>
