@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>실시간 주문 관리</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212; /* 다크 모드 */
+            color: #ffffff;
+            padding: 20px;
+        }
+        .order-container {
+            margin-top: 20px;
+        }
+        .order-item {
+            border: 1px solid #333333;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .sound-test {
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #1e90ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>실시간 주문 관리</h1>
+    <button class="sound-test" onclick="allowSound()">소리 활성화</button>
+    <div id="order-container"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-app.js";
+        import { getDatabase, ref, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/9.6.7/firebase-database.js";
+
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyDojAT1_4R_4FmMdZ2xdnLTt6KFkrH30B0",
+            authDomain: "foodorder-3670c.firebaseapp.com",
+            databaseURL: "https://foodorder-3670c-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "foodorder-3670c",
+            storageBucket: "foodorder-3670c.appspot.com",
+            messagingSenderId: "661897006994",
+            appId: "1:661897006994:web:f36f1b2185c7311a2f7b4b",
+            measurementId: "G-22F19RT006"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const ordersRef = ref(database, "orders");
+
+        const orderContainer = document.getElementById("order-container");
+        let audio;
+
+        // 사용자 상호작용으로 소리 재생 허용 (전역 함수로 정의)
+        window.allowSound = function() {
+            audio = new Audio("http://bell.wuaze.com/bell.mp3");
+            audio.play().then(() => {
+                audio.pause(); // 미리 허용 후 멈춤
+                console.log("소리 재생이 활성화되었습니다.");
+            }).catch(error => console.error("소리 활성화 실패:", error));
+        };
+
+        // 주문 실시간 추가 감지
+        onChildAdded(ordersRef, (snapshot) => {
+            const orderKey = snapshot.key; // 주문 키
+            const order = snapshot.val();
+
+            // 주문을 페이지에 추가
+            addOrderToPage(orderKey, order);
+
+            // 소리 재생
+            playSound();
+
+            // 5분 후 주문 삭제
+            setTimeout(() => {
+                remove(ref(database, `orders/${orderKey}`))
+                    .then(() => console.log(`주문 ${orderKey} 삭제 완료`))
+                    .catch((error) => console.error(`주문 삭제 실패: ${error}`));
+            }, 300000); // 300,000ms = 5분
+        });
+
+        // 주문을 페이지에 추가
+        function addOrderToPage(orderKey, order) {
+            const div = document.createElement("div");
+            div.classList.add("order-item");
+            div.id = `order-${orderKey}`;
+            div.innerHTML = `
+                <h3>주문: ${order.name}</h3>
+                <p>수량: ${order.quantity}개</p>
+                <p>가격: ${order.price}원</p>
+            `;
+            orderContainer.appendChild(div);
+        }
+
+        // 소리 재생 함수
+        function playSound() {
+            if (audio) {
+                audio.play().catch(error => console.error("소리 재생 실패:", error));
+            } else {
+                console.warn("소리가 활성화되지 않았습니다.");
+            }
+        }
+    </script>
+</body>
+</html>
