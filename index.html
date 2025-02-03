@@ -93,10 +93,11 @@
                 remove(ref(database, `orders/${orderKey}`))
                     .then(() => console.log(`주문 ${orderKey} 삭제 완료`))
                     .catch((error) => console.error(`주문 삭제 실패: ${error}`));
+                removeOrderFromPage(orderKey); // 화면에서도 삭제
             }, 300000); // 300,000ms = 5분
         });
 
-        // 주문을 페이지에 추가
+        // 주문을 페이지에 추가 (최신 주문이 위로 오도록)
         function addOrderToPage(orderKey, order) {
             const div = document.createElement("div");
             div.classList.add("order-item");
@@ -106,7 +107,7 @@
                 <p>수량: ${order.quantity}개</p>
                 <p>가격: ${order.price}원</p>
             `;
-            orderContainer.appendChild(div);
+            orderContainer.prepend(div); // 최신 주문을 맨 위에 추가
         }
 
         // 소리 재생 함수
@@ -120,6 +121,15 @@
                 alert("소리 재생 중 문제가 발생했습니다.");
             });
         }
+
+        // 주문을 화면에서 제거
+        function removeOrderFromPage(orderKey) {
+            const orderDiv = document.getElementById(`order-${orderKey}`);
+            if (orderDiv) {
+                orderDiv.remove();
+            }
+        }
     </script>
 </body>
 </html>
+
